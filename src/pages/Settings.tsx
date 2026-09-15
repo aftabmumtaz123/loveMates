@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {Copy,Check,Heart,LogOut,Save,Camera,Link2,Clock3,Unlink} from 'lucide-react';
-import {api,errorMessage} from '../lib/api';
+import {api,errorMessage,clearAuthToken} from '../lib/api';
 import {useAuth} from '../main';
 import {useNavigate} from 'react-router-dom';
 
@@ -17,7 +17,7 @@ export default function Settings(){
  const saveCouple=async(e:React.FormEvent)=>{e.preventDefault();setError('');setBusy(true);try{await api.patch('/couple',{name:spaceName,fellInLoveAt:fellInLoveAt?new Date(fellInLoveAt).toISOString():undefined,coverQuote});await refresh();setMsg('Your love story is updated.');setTimeout(()=>setMsg(''),2500)}catch(e){setError(errorMessage(e))}finally{setBusy(false)}};
  const connect=async(e:React.FormEvent)=>{e.preventDefault();setError('');setConnecting(true);try{await api.post('/couple/connect',{inviteCode:partnerCode.trim().toUpperCase()});await refresh();setPartnerCode('');setMsg('Partner request sent. They will receive an email and must confirm it from their dashboard before you become partners.');setTimeout(()=>setMsg(''),3000)}catch(e){setError(errorMessage(e))}finally{setConnecting(false)}};
  const copy=()=>{navigator.clipboard?.writeText(couple?.inviteCode||'');setCopied(true);setTimeout(()=>setCopied(false),1500)};
- const logout=async()=>{await api.post('/auth/logout');await refresh();nav('/login')};
+ const logout=async()=>{await api.post('/auth/logout');clearAuthToken();await refresh();nav('/login')};
  return <><p className="eyebrow">YOUR PRIVATE SPACE</p><h1 className="font-display text-4xl font-bold">Settings</h1>{error&&<div className="alert-error mt-5">{error}</div>}{msg&&<div className="alert-success mt-5">{msg}</div>}
  <div className="mt-7 grid gap-5 lg:grid-cols-2">
  <section className="card"><div className="mb-5 flex items-center gap-3"><div className="relative">{user?.profilePicture?<img src={user.profilePicture} className="size-14 rounded-2xl object-cover"/>:<div className="grid size-14 place-items-center rounded-2xl bg-rose-50 text-rose-400"><Heart fill="currentColor"/></div>}<label className="absolute -bottom-2 -right-2 grid size-8 cursor-pointer place-items-center rounded-full bg-white text-rose-500 shadow-md"><Camera size={15}/><input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>setPhoto(e.target.files?.[0]||null)}/></label></div><div><h2 className="font-semibold">Your profile</h2><p className="text-xs text-slate-400">Personal details and your birthday reminder.</p></div></div>

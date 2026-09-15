@@ -2,7 +2,7 @@ import React,{createContext,useContext,useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {BrowserRouter,Routes,Route} from 'react-router-dom';
 import './index.css';
-import {api} from './lib/api';
+import {api,saveAuthToken,clearAuthToken} from './lib/api';
 import type {User,Couple} from './types';
 import AuthGate from './components/AuthGate';
 import AppLayout from './components/AppLayout';
@@ -14,7 +14,7 @@ const C=createContext<Auth>({user:null,loading:true,couple:null,refresh:async()=
 export const useAuth=()=>useContext(C);
 function App(){
   const [user,setUser]=useState<User|null>(null),[couple,setCouple]=useState<Couple|null>(null),[loading,setLoading]=useState(true);
-  const refresh=async()=>{try{const r=await api.get('/auth/me');setUser(r.data.user);setCouple(r.data.couple)}catch{setUser(null);setCouple(null)}finally{setLoading(false)}};
+  const refresh=async()=>{try{const r=await api.get('/auth/me');setUser(r.data.user);setCouple(r.data.couple);if(r.data.token)saveAuthToken(r.data.token)}catch{clearAuthToken();setUser(null);setCouple(null)}finally{setLoading(false)}};
   useEffect(()=>{refresh()},[]);
   return <C.Provider value={{user,loading,couple,refresh}}><ErrorBoundary><Routes>
     <Route path="/login" element={<Login/>}/><Route path="/signup" element={<Signup/>}/>

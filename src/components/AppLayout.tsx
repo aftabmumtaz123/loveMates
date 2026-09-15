@@ -2,7 +2,7 @@ import {NavLink, Outlet, useNavigate} from 'react-router-dom';
 import {useState} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import {Heart, Home, Image, CheckSquare, CalendarDays, BookHeart, Settings, Menu, X, LogOut, Sparkles, MessageCircle, Cake} from 'lucide-react';
-import {api} from '../lib/api';
+import {api,clearAuthToken} from '../lib/api';
 import {useAuth} from '../main';
 
 const links = [
@@ -12,7 +12,7 @@ const links = [
 
 export default function AppLayout(){
   const [open,setOpen]=useState(false); const nav=useNavigate(); const {couple,user,refresh}=useAuth();
-  const logout=async()=>{await api.post('/auth/logout');await refresh();nav('/login')};
+  const logout=async()=>{await api.post('/auth/logout');clearAuthToken();await refresh();nav('/login')};
   const navItems=links.map(([to,label,Icon])=><NavLink onClick={()=>setOpen(false)} key={to} to={to} className={({isActive})=>`nav-link ${isActive?'nav-active':''}`}><Icon size={19}/>{label}</NavLink>);
   return <div className="min-h-screen bg-[#fff9fb] text-slate-800">
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-rose-100 bg-white/85 px-5 py-6 backdrop-blur-xl lg:block">

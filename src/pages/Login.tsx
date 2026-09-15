@@ -3,7 +3,7 @@ import type {FormEvent} from 'react';
 import {Link,useNavigate} from 'react-router-dom';
 import {ArrowRight,Heart,MailCheck,ShieldCheck,KeyRound} from 'lucide-react';
 import {motion} from 'framer-motion';
-import {api,errorMessage} from '../lib/api';
+import {api,errorMessage,saveAuthToken} from '../lib/api';
 import {useAuth} from '../main';
 
 type Step='password'|'forgot-email'|'forgot-otp';
@@ -12,7 +12,7 @@ export default function Login(){
   const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [otp,setOtp]=useState(''); const [newPassword,setNewPassword]=useState('');
   const [error,setError]=useState(''); const [notice,setNotice]=useState(''); const [busy,setBusy]=useState(false); const [accountMissing,setAccountMissing]=useState(false);
   const nav=useNavigate(); const {refresh}=useAuth();
-  const login=async(e:FormEvent)=>{e.preventDefault();setError('');setNotice('');setAccountMissing(false);setBusy(true);try{await api.post('/auth/login',{email,password});await refresh();nav('/')}catch(err){if((err as any)?.response?.status===404){setAccountMissing(true);setError('No account was found with this email.')}else setError(errorMessage(err))}finally{setBusy(false)}};
+  const login=async(e:FormEvent)=>{e.preventDefault();setError('');setNotice('');setAccountMissing(false);setBusy(true);try{const r=await api.post('/auth/login',{email,password});saveAuthToken(r.data.token);await refresh();nav('/')}catch(err){if((err as any)?.response?.status===404){setAccountMissing(true);setError('No account was found with this email.')}else setError(errorMessage(err))}finally{setBusy(false)}};
   const requestReset=async(e:FormEvent)=>{e.preventDefault();setError('');setNotice('');setBusy(true);try{const r=await api.post('/auth/forgot-password/request-otp',{email});setNotice(r.data.message);setStep('forgot-otp')}catch(err){setError(errorMessage(err))}finally{setBusy(false)}};
   const reset=async(e:FormEvent)=>{e.preventDefault();setError('');setNotice('');setBusy(true);try{await api.post('/auth/forgot-password/reset',{email,code:otp,newPassword});await refresh();nav('/')}catch(err){setError(errorMessage(err))}finally{setBusy(false)}};
   const createAccount=()=>nav(`/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`);
