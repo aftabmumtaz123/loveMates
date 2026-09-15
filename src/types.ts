@@ -1,0 +1,9 @@
+export type User={id:string;name:string;email:string;coupleId:string;profilePicture?:string;birthDay?:number;birthMonth?:number;gender?:string;age?:number;emailVerified?:boolean};
+export type Couple={id:string;name:string;inviteCode:string;anniversary?:string;fellInLoveAt?:string;coverQuote?:string;pendingPartnerRequest?:{id:string;requesterId?:string;requesterName?:string;requesterEmail?:string;requesterProfilePicture?:string}|null;outgoingPartnerRequest?:{id:string;recipientId?:string;recipientName?:string;recipientEmail?:string;recipientProfilePicture?:string}|null;partner?:{name:string;email:string;profilePicture?:string;birthDay?:number;birthMonth?:number;gender?:string;age?:number;emailVerified?:boolean}|null};
+export type MemoryUser={id:string;name:string;profilePicture?:string};
+export type MemoryComment={id:string;body:string;createdAt:string;user:MemoryUser};
+export type Memory={_id:string;title:string;story:string;emoji:string;happenedAt:string;imageUrl?:string;createdBy:string;createdByUser?:MemoryUser;reactionCounts?:Record<string,number>;myReaction?:string|null;comments?:MemoryComment[]};
+export type Bucket={_id:string;title:string;done:boolean;createdBy:string};
+export type DatePlan={_id:string;title:string;date:string;note:string;createdBy:string};
+export type Journal={_id:string;body:string;mood:string;createdAt:string;createdBy:string};
+export type Message={_id:string;body:string;createdBy:string;createdAt:string};
