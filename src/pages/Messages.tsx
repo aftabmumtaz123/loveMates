@@ -1,4 +1,4 @@
-import {FormEvent,useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';import type {FormEvent} from 'react';
 import {Heart,Send,MessageCircle,RefreshCw} from 'lucide-react';
 import {api,errorMessage} from '../lib/api';
 import type {Message} from '../types';

@@ -21,7 +21,7 @@ export default function AppLayout(){
     </aside>
     <header className="sticky top-0 z-30 border-b border-rose-100/80 bg-white/85 px-4 py-3 backdrop-blur-xl lg:hidden"><div className="flex items-center justify-between"><Brand compact/><button className="icon-btn" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></div></header>
     <AnimatePresence>{open&&<motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="fixed inset-x-0 top-[65px] z-30 bg-white p-4 shadow-xl lg:hidden"><div className="space-y-1">{navItems}</div></motion.div>}</AnimatePresence>
-    <main className="mx-auto max-w-6xl px-4 py-6 lg:ml-72 lg:px-10 lg:py-10"><Outlet/></main>
+    <main className="w-full px-4 py-6 lg:ml-72 lg:w-[calc(100%-18rem)] lg:max-w-none lg:px-8 lg:py-10"><Outlet/></main>
   </div>
 }
 function Avatar({src}:{src?:string}){return src?<img src={src} className="size-10 rounded-xl object-cover"/>:<div className="grid size-10 place-items-center rounded-xl bg-white text-rose-400"><Heart size={17} fill="currentColor"/></div>}

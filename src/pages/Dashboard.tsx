@@ -7,7 +7,53 @@ import type {Bucket,DatePlan,Journal,Memory} from '../types';
 import {useAuth} from '../main';
 
 function birthdayInfo(month?:number,day?:number){if(!month||!day)return null;const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());let target=new Date(now.getFullYear(),month-1,day);if(target<today)target=new Date(now.getFullYear()+1,month-1,day);return Math.round((target.getTime()-today.getTime())/86400000)}
-function loveDuration(startValue?:string, nowValue=new Date()){if(!startValue)return null;const start=new Date(startValue);if(Number.isNaN(+start)||start>nowValue)return null;let years=nowValue.getFullYear()-start.getFullYear();let months=nowValue.getMonth()-start.getMonth();let days=nowValue.getDate()-start.getDate();if(days<0){const prevMonth=new Date(nowValue.getFullYear(),nowValue.getMonth(),0).getDate();days+=prevMonth;months--;}if(months<0){months+=12;years--;}const anchor=new Date(start);anchor.setFullYear(start.getFullYear()+years);anchor.setMonth(start.getMonth()+months);anchor.setDate(start.getDate()+days);const totalSeconds=Math.max(0,Math.floor((nowValue.getTime()-start.getTime())/1000));const totalMinutes=Math.floor(totalSeconds/60),totalHours=Math.floor(totalMinutes/60),totalDays=Math.floor(totalHours/24);return {years,months,days,hours:totalHours%24,minutes:totalMinutes%60,seconds:totalSeconds%60,totalDays,totalMinutes,totalSeconds};}
+function loveDuration(startValue?:string, nowValue=new Date()){
+  if(!startValue)return null;
+
+  const start=new Date(startValue);
+  const now=new Date(nowValue);
+
+  if(Number.isNaN(start.getTime())||Number.isNaN(now.getTime())||start>now)return null;
+
+  // All instant-based units are calculated from the exact stored timestamp.
+  // This prevents the old "20 days" result caused by calendar-component math.
+  const elapsedMs=now.getTime()-start.getTime();
+  const totalSeconds=Math.floor(elapsedMs/1000);
+  const totalMinutes=Math.floor(totalSeconds/60);
+  const totalHours=Math.floor(totalMinutes/60);
+  const totalDays=Math.floor(totalHours/24);
+
+  // Calendar-aware completed months/years, while preserving the exact time.
+  let years=now.getFullYear()-start.getFullYear();
+  let months=years*12+(now.getMonth()-start.getMonth());
+
+  const anniversary=new Date(start);
+  anniversary.setFullYear(start.getFullYear()+years);
+  anniversary.setMonth(start.getMonth());
+
+  if(anniversary>now){
+    years-=1;
+    months-=12;
+  }
+
+  const monthAnchor=new Date(start);
+  monthAnchor.setFullYear(start.getFullYear());
+  monthAnchor.setMonth(start.getMonth()+months);
+
+  if(monthAnchor>now)months-=1;
+
+  return {
+    years:Math.max(0,years),
+    months:Math.max(0,months),
+    days:totalDays,
+    hours:totalHours,
+    minutes:totalMinutes,
+    seconds:totalSeconds,
+    totalDays,
+    totalMinutes,
+    totalSeconds
+  };
+}
 
 export default function Dashboard(){
   const {user,couple,refresh}=useAuth();
