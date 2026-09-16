@@ -9,7 +9,7 @@ const REACTIONS=[['like','👍','Like'],['love','❤️','Love'],['haha','😂',
 
 export default function MomentDetail(){
  const {id=''}=useParams(); const nav=useNavigate(); const {user}=useAuth();
- const [memory,setMemory]=useState<Memory|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[commentText,setCommentText]=useState(''),[showReactions,setShowReactions]=useState(false),[busy,setBusy]=useState(false);
+ const [galleryIndex,setGalleryIndex]=useState(0); const [memory,setMemory]=useState<Memory|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[commentText,setCommentText]=useState(''),[showReactions,setShowReactions]=useState(false),[busy,setBusy]=useState(false);
  const load=async()=>{setLoading(true);setError('');try{const r=await api.get('/memories/'+id);setMemory(r.data)}catch(e){setError(errorMessage(e))}finally{setLoading(false)}};
  useEffect(()=>{void load()},[id]);
  const react=async(reaction:string)=>{try{if(memory?.myReaction===reaction) await api.delete('/memories/'+id+'/reaction'); else await api.put('/memories/'+id+'/reaction',{reaction}); await load();setShowReactions(false)}catch(e){setError(errorMessage(e))}};
@@ -17,14 +17,14 @@ export default function MomentDetail(){
  const del=async()=>{if(!memory||!confirm('Delete this moment?'))return;try{await api.delete('/memories/'+id);nav('/memories')}catch(e){setError(errorMessage(e))}};
  if(loading)return <div className="card p-12 text-center text-sm text-slate-400">♥ Opening your moment…</div>;
  if(error||!memory)return <div><Link to="/memories" className="btn-secondary"><ArrowLeft size={16}/> Back to moments</Link><div className="alert-error mt-5">{error||'Moment not found.'}</div></div>;
- const counts=memory.reactionCounts||{}; const total=Object.values(counts).reduce((a,b)=>a+b,0); const creatorId=String(memory.createdBy); const isCreator=user?.id===creatorId;
+ const gallery=(memory.imageUrls&&memory.imageUrls.length?memory.imageUrls:[memory.imageUrl].filter(Boolean)) as string[]; const activeImage=gallery[galleryIndex]||memory.imageUrl; const counts=memory.reactionCounts||{}; const total=Object.values(counts).reduce((a,b)=>a+b,0); const creatorId=String(memory.createdBy); const isCreator=user?.id===creatorId;
  return <div>
    <Link to="/memories" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-rose-500"><ArrowLeft size={17}/> Back to moments</Link>
    {error&&<div className="alert-error mb-5">{error}</div>}
    <div className="overflow-hidden rounded-[2rem] border border-rose-100 bg-white shadow-[0_24px_70px_rgba(244,63,94,.10)] lg:h-[calc(100vh-9rem)] lg:min-h-[620px]">
     <div className="grid h-full lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,.85fr)]">
       <section className="relative flex min-h-[360px] items-center justify-center overflow-hidden bg-slate-950">
-        {memory.imageUrl?<img src={memory.imageUrl} className="h-full max-h-[calc(100vh-9rem)] w-full object-contain"/>:<div className="flex h-full min-h-[360px] w-full items-center justify-center bg-gradient-to-br from-rose-50 via-white to-violet-50 text-7xl">{memory.emoji}</div>}
+        {activeImage?<><img src={activeImage} className="h-full max-h-[calc(100vh-9rem)] w-full object-contain"/>{gallery.length>1&&<div className="absolute left-1/2 top-5 flex -translate-x-1/2 gap-2 rounded-2xl bg-black/35 p-2 backdrop-blur">{gallery.map((src,i)=><button key={src+i} onClick={()=>setGalleryIndex(i)} className={`size-12 overflow-hidden rounded-xl border-2 ${i===galleryIndex?'border-white':'border-transparent opacity-70'}`}><img src={src} className="h-full w-full object-cover"/></button>)}</div>}</>:<div className="flex h-full min-h-[360px] w-full items-center justify-center bg-gradient-to-br from-rose-50 via-white to-violet-50 text-7xl">{memory.emoji}</div>}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-6 pt-20 text-white">
           <div className="flex items-center gap-3"><Avatar src={memory.createdByUser?.profilePicture}/><div><p className="text-sm font-semibold">{memory.createdByUser?.name||'Your partner'}</p><p className="text-xs text-white/70">Uploaded this moment</p></div></div>
           <h1 className="mt-4 font-display text-3xl font-bold">{memory.title}</h1>

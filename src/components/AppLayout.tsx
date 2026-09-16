@@ -1,26 +1,26 @@
 import {NavLink, Outlet, useNavigate} from 'react-router-dom';
 import {useState} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import {Heart, Home, Image, CheckSquare, CalendarDays, BookHeart, Settings, Menu, X, LogOut, Sparkles, MessageCircle, Cake} from 'lucide-react';
-import {api,clearAuthToken} from '../lib/api';
+import {Heart, Home, Image, CheckSquare, CalendarDays, BookHeart, Settings, Menu, X, LogOut, Sparkles, MessageCircle, Cake, Bell, HeartHandshake, Mail, MapPin, BarChart3} from 'lucide-react';
+import {api} from '../lib/api';
 import {useAuth} from '../main';
 
 const links = [
   ['/','Home',Home], ['/memories','Memories',Image], ['/bucket-list','Bucket list',CheckSquare],
-  ['/dates','Dates',CalendarDays], ['/journal','Journal',BookHeart], ['/messages','Messages',MessageCircle], ['/settings','Settings',Settings]
+  ['/dates','Dates',CalendarDays], ['/journal','Journal',BookHeart], ['/messages','Messages',MessageCircle], ['/rituals','Daily rituals',HeartHandshake], ['/letters','Open When',Mail], ['/timeline','Our timeline',HeartHandshake], ['/places','Places',MapPin], ['/stats','Our stats',BarChart3], ['/notifications','Notifications',Bell], ['/settings','Settings',Settings]
 ] as const;
 
 export default function AppLayout(){
   const [open,setOpen]=useState(false); const nav=useNavigate(); const {couple,user,refresh}=useAuth();
-  const logout=async()=>{await api.post('/auth/logout');clearAuthToken();await refresh();nav('/login')};
+  const logout=async()=>{await api.post('/auth/logout');await refresh();nav('/login')};
   const navItems=links.map(([to,label,Icon])=><NavLink onClick={()=>setOpen(false)} key={to} to={to} className={({isActive})=>`nav-link ${isActive?'nav-active':''}`}><Icon size={19}/>{label}</NavLink>);
   return <div className="min-h-screen bg-[#fff9fb] text-slate-800">
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-rose-100 bg-white/85 px-5 py-6 backdrop-blur-xl lg:block">
-      <Brand/><div className="mt-6 flex items-center gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-3"><Avatar src={user?.profilePicture}/><div className="min-w-0"><p className="truncate text-sm font-semibold">{couple?.name||'Our space'}</p><p className="flex items-center gap-1 text-[11px] text-slate-400"><Cake size={12}/> Private couple space</p></div></div><div className="mt-5 space-y-2">{navItems}</div>
-      <div className="absolute bottom-6 left-5 right-5"><div className="rounded-3xl bg-gradient-to-br from-rose-50 to-violet-50 p-4"><div className="flex items-center gap-2 text-sm font-semibold"><Sparkles size={16}/> Your little corner</div><p className="mt-1 text-xs leading-5 text-slate-500">{couple?.name||'Our space'} is private to you two.</p></div><button onClick={logout} className="mt-3 nav-link w-full text-slate-500"><LogOut size={18}/> Sign out</button></div>
+    <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 flex-col overflow-hidden border-r border-rose-100 bg-white/85 px-5 py-6 backdrop-blur-xl lg:flex">
+      <Brand/><div className="mt-6 flex shrink-0 items-center gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-3"><Avatar src={user?.profilePicture}/><div className="min-w-0"><p className="truncate text-sm font-semibold">{couple?.name||'Our space'}</p><p className="flex items-center gap-1 text-[11px] text-slate-400"><Cake size={12}/> Private couple space</p></div></div><div className="mt-5 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">{navItems}</div>
+      <div className="mt-4 shrink-0"><div className="rounded-3xl bg-gradient-to-br from-rose-50 to-violet-50 p-4"><div className="flex items-center gap-2 text-sm font-semibold"><Sparkles size={16}/> Your little corner</div><p className="mt-1 text-xs leading-5 text-slate-500">{couple?.name||'Our space'} is private to you two.</p></div><button onClick={logout} className="mt-3 nav-link w-full text-slate-500"><LogOut size={18}/> Sign out</button></div>
     </aside>
     <header className="sticky top-0 z-30 border-b border-rose-100/80 bg-white/85 px-4 py-3 backdrop-blur-xl lg:hidden"><div className="flex items-center justify-between"><Brand compact/><button className="icon-btn" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button></div></header>
-    <AnimatePresence>{open&&<motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="fixed inset-x-0 top-[65px] z-30 bg-white p-4 shadow-xl lg:hidden"><div className="space-y-1">{navItems}</div></motion.div>}</AnimatePresence>
+    <AnimatePresence>{open&&<motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-10}} className="fixed inset-x-0 top-[65px] z-30 max-h-[calc(100vh-65px)] overflow-y-auto bg-white p-4 shadow-xl lg:hidden"><div className="space-y-1">{navItems}</div></motion.div>}</AnimatePresence>
     <main className="w-full px-4 py-6 lg:ml-72 lg:w-[calc(100%-18rem)] lg:max-w-none lg:px-8 lg:py-10"><Outlet/></main>
   </div>
 }

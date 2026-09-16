@@ -1,25 +1,84 @@
-import React,{useState} from 'react';
+import React from 'react';
+import {useState} from 'react';
 import type {FormEvent} from 'react';
 import {Link,useNavigate} from 'react-router-dom';
-import {ArrowRight,Heart,MailCheck,ShieldCheck,KeyRound} from 'lucide-react';
+import {ArrowRight,Heart,MailCheck,ShieldCheck} from 'lucide-react';
 import {motion} from 'framer-motion';
-import {api,errorMessage,saveAuthToken} from '../lib/api';
+import {api,errorMessage} from '../lib/api';
 import {useAuth} from '../main';
 
-type Step='password'|'forgot-email'|'forgot-otp';
 export default function Login(){
-  const [step,setStep]=useState<Step>('password');
-  const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [otp,setOtp]=useState(''); const [newPassword,setNewPassword]=useState('');
-  const [error,setError]=useState(''); const [notice,setNotice]=useState(''); const [busy,setBusy]=useState(false); const [accountMissing,setAccountMissing]=useState(false);
-  const nav=useNavigate(); const {refresh}=useAuth();
-  const login=async(e:FormEvent)=>{e.preventDefault();setError('');setNotice('');setAccountMissing(false);setBusy(true);try{const r=await api.post('/auth/login',{email,password});saveAuthToken(r.data.token);await refresh();nav('/')}catch(err){if((err as any)?.response?.status===404){setAccountMissing(true);setError('No account was found with this email.')}else setError(errorMessage(err))}finally{setBusy(false)}};
-  const requestReset=async(e:FormEvent)=>{e.preventDefault();setError('');setNotice('');setBusy(true);try{const r=await api.post('/auth/forgot-password/request-otp',{email});setNotice(r.data.message);setStep('forgot-otp')}catch(err){setError(errorMessage(err))}finally{setBusy(false)}};
-  const reset=async(e:FormEvent)=>{e.preventDefault();setError('');setNotice('');setBusy(true);try{await api.post('/auth/forgot-password/reset',{email,code:otp,newPassword});await refresh();nav('/')}catch(err){setError(errorMessage(err))}finally{setBusy(false)}};
+  const [step,setStep]=useState<'password'|'otp'>('password');
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [otp,setOtp]=useState('');
+  const [error,setError]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [accountMissing,setAccountMissing]=useState(false);
+  const nav=useNavigate();
+  const {refresh}=useAuth();
+
+  const request=async(e:FormEvent)=>{
+    e.preventDefault();
+    setError('');
+    setAccountMissing(false);
+    setBusy(true);
+    try{
+      await api.post('/auth/login/request-otp',{email,password});
+      setStep('otp');
+    }catch(e){
+      const status=(e as any)?.response?.status;
+      if(status===404){
+        setAccountMissing(true);
+        setError('No account was found with this email.');
+      }else{
+        setError(errorMessage(e));
+      }
+    }finally{setBusy(false)}
+  };
+
+  const verify=async(e:FormEvent)=>{
+    e.preventDefault();
+    setError('');
+    setBusy(true);
+    try{
+      await api.post('/auth/login/verify',{email,code:otp});
+      await refresh();
+      nav('/');
+    }catch(e){setError(errorMessage(e))}finally{setBusy(false)}
+  };
+
   const createAccount=()=>nav(`/signup?email=${encodeURIComponent(email.trim().toLowerCase())}`);
-  return <AuthShell>
-    {step==='password'&&<div className="mx-auto w-full max-w-md"><p className="eyebrow">WELCOME BACK</p><h1 className="font-display text-4xl font-bold tracking-tight">Come back to your<br/><span className="text-gradient">little world.</span></h1><p className="mt-3 text-slate-500">Sign in with your email and password.</p><form onSubmit={login} className="mt-8 space-y-4">{error&&<div className="alert-error">{error}</div>}{accountMissing&&<div className="rounded-2xl border border-rose-100 bg-rose-50/70 p-4"><p className="text-sm font-semibold text-slate-800">Create your CoupleNest account?</p><p className="mt-1 text-xs leading-5 text-slate-500">We couldn't find an account for <b className="text-slate-700">{email}</b>.</p><button type="button" onClick={createAccount} className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-rose-500">Create account with this email <ArrowRight size={15}/></button></div>}<input className="input" placeholder="Email address" type="email" value={email} onChange={e=>{setEmail(e.target.value);setAccountMissing(false)}} required/><input className="input" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/><button disabled={busy} className="btn-primary w-full">{busy?'Signing in…':'Sign in securely'}<ArrowRight size={17}/></button><div className="flex items-center justify-center gap-2 text-xs text-slate-400"><ShieldCheck size={14}/> Email verification is required only when creating your account</div></form><button type="button" onClick={()=>{setError('');setNotice('');setStep('forgot-email')}} className="mt-4 w-full text-sm font-semibold text-slate-500 hover:text-rose-500">Forgot your password?</button><p className="mt-5 text-center text-sm text-slate-500">New here? <Link className="font-semibold text-rose-500" to="/signup">Create your nest</Link></p></div>}
-    {step==='forgot-email'&&<div className="mx-auto w-full max-w-md"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-rose-50 text-rose-500"><KeyRound/></div><p className="eyebrow mt-6">PASSWORD RESET</p><h1 className="font-display text-4xl font-bold">Let's get you back in.</h1><p className="mt-3 text-slate-500">Enter the email on your CoupleNest account and we'll send a one-time code.</p><form onSubmit={requestReset} className="mt-7 space-y-4">{error&&<div className="alert-error">{error}</div>}<input autoFocus className="input" type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)} required/><button disabled={busy} className="btn-primary w-full">{busy?'Sending code…':'Send reset code'}<ArrowRight size={17}/></button></form><button onClick={()=>setStep('password')} className="mt-4 w-full text-sm font-semibold text-slate-500 hover:text-rose-500">← Back to sign in</button></div>}
-    {step==='forgot-otp'&&<div className="mx-auto w-full max-w-md"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-rose-50 text-rose-500"><MailCheck/></div><p className="eyebrow mt-6">RESET YOUR PASSWORD</p><h1 className="font-display text-4xl font-bold">Choose a new password.</h1><p className="mt-3 text-slate-500">Enter the code sent to <b className="text-slate-700">{email}</b>, then choose a new password.</p>{notice&&<div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">{notice}</div>}<form onSubmit={reset} className="mt-5 space-y-4">{error&&<div className="alert-error">{error}</div>}<input autoFocus inputMode="numeric" pattern="[0-9]{6}" maxLength={6} className="input text-center text-2xl font-bold tracking-[.5em]" placeholder="000000" value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))} required/><input className="input" type="password" minLength={8} placeholder="New password (8+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)} required/><button disabled={busy||otp.length!==6} className="btn-primary w-full">{busy?'Updating password…':'Reset password & enter'}<ArrowRight size={17}/></button></form><button onClick={()=>setStep('forgot-email')} className="mt-4 w-full text-sm font-semibold text-slate-500 hover:text-rose-500">← Use another email</button></div>}
-  </AuthShell>
+
+  return <AuthShell>{step==='password'?<div className="mx-auto w-full max-w-md">
+    <p className="eyebrow">WELCOME BACK</p>
+    <h1 className="font-display text-4xl font-bold tracking-tight">Come back to your<br/><span className="text-gradient">little world.</span></h1>
+    <p className="mt-3 text-slate-500">Password first, then we'll send a fresh email code.</p>
+    <form onSubmit={request} className="mt-8 space-y-4">
+      {error&&<div className="alert-error">{error}</div>}
+      {accountMissing&&<div className="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">
+        <p className="text-sm font-semibold text-slate-800">Create your CoupleNest account?</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">We couldn't find an account for <b className="text-slate-700">{email}</b>. You can create one using this email address.</p>
+        <button type="button" onClick={createAccount} className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-rose-500 hover:text-rose-600">Create account with this email <ArrowRight size={15}/></button>
+      </div>}
+      <input className="input" placeholder="Email address" type="email" value={email} onChange={e=>{setEmail(e.target.value);setAccountMissing(false)}} required/>
+      <input className="input" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>
+      <button disabled={busy} className="btn-primary w-full">{busy?'Sending code…':'Continue securely'}<ArrowRight size={17}/></button>
+      <div className="flex items-center justify-center gap-2 text-xs text-slate-400"><ShieldCheck size={14}/> Every login requires email verification</div>
+    </form>
+    <p className="mt-6 text-center text-sm text-slate-500">New here? <Link className="font-semibold text-rose-500" to="/signup">Create your nest</Link></p>
+  </div>:<div className="mx-auto w-full max-w-md">
+    <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-rose-50 text-rose-500"><MailCheck/></div>
+    <p className="eyebrow mt-6">EMAIL VERIFICATION</p>
+    <h1 className="font-display text-4xl font-bold">Check your inbox.</h1>
+    <p className="mt-3 text-slate-500">Enter the 6-digit code we sent to <b className="text-slate-700">{email}</b>.</p>
+    <form onSubmit={verify} className="mt-7 space-y-4">
+      {error&&<div className="alert-error">{error}</div>}
+      <input autoFocus inputMode="numeric" pattern="[0-9]{6}" maxLength={6} className="input text-center text-2xl font-bold tracking-[.5em]" placeholder="000000" value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))} required/>
+      <button disabled={busy||otp.length!==6} className="btn-primary w-full">{busy?'Verifying…':'Verify & enter CoupleNest'}<ArrowRight size={17}/></button>
+    </form>
+    <button onClick={()=>setStep('password')} className="mt-4 w-full text-sm font-semibold text-slate-500 hover:text-rose-500">← Back</button>
+  </div>}</AuthShell>
 }
+
 function AuthShell({children}:{children:React.ReactNode}){return <div className="min-h-screen overflow-hidden bg-[#fff9fb]"><div className="absolute -left-24 -top-24 size-72 rounded-full bg-rose-200/50 blur-3xl"/><div className="absolute -bottom-32 -right-20 size-96 rounded-full bg-violet-200/50 blur-3xl"/><div className="relative mx-auto grid min-h-screen max-w-6xl gap-12 px-6 py-10 lg:grid-cols-2 lg:items-center"><motion.div initial={{opacity:0,x:-20}} animate={{opacity:1,x:0}} className="hidden lg:block"><div className="inline-flex items-center gap-3 rounded-full border border-rose-100 bg-white/70 px-4 py-2 text-sm font-semibold"><Heart size={15} className="text-rose-500" fill="currentColor"/> Made for two</div><h2 className="mt-8 font-display text-6xl font-bold leading-[1.02]">A tiny home<br/>for your <span className="text-gradient">big love.</span></h2><p className="mt-6 max-w-md text-lg leading-8 text-slate-500">Keep the little things that become the best stories — together, privately, beautifully.</p></motion.div><motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}>{children}</motion.div></div></div>}
