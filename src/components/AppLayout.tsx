@@ -1,5 +1,5 @@
 import {NavLink, Outlet, useNavigate} from 'react-router-dom';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import {Heart, Home, Image, CheckSquare, CalendarDays, BookHeart, Settings, Menu, X, LogOut, Sparkles, MessageCircle, Cake, Bell, HeartHandshake, Mail, MapPin, BarChart3,WalletCards,Gamepad2,Music2,Gift,ListTodo,UserRound,ShieldCheck,Palette,BellRing,Smartphone} from 'lucide-react';
 import {api} from '../lib/api';
@@ -11,10 +11,10 @@ const links = [
 ] as const;
 
 export default function AppLayout(){
-  const [open,setOpen]=useState(false); const nav=useNavigate(); const {couple,user,refresh}=useAuth();
-  const logout=async()=>{await api.post('/auth/logout');await refresh();nav('/login')};
-  const navItems=links.map(([to,label,Icon])=><NavLink onClick={()=>setOpen(false)} key={to} to={to} className={({isActive})=>`nav-link ${isActive?'nav-active':''}`}><Icon size={19}/>{label}</NavLink>);
-  return <div className="min-h-screen bg-[#fff9fb] text-slate-800">
+  const [open,setOpen]=useState(false); const [unread,setUnread]=useState(0); const nav=useNavigate(); const {couple,user,refresh}=useAuth();
+  const logout=async()=>{await api.post('/auth/logout');await refresh();nav('/login')}; useEffect(()=>{let alive=true;const load=async()=>{try{const r=await api.get('/notifications');if(alive)setUnread(Number(r.data.unread||0))}catch{}};void load();const timer=window.setInterval(load,10000);return()=>{alive=false;window.clearInterval(timer)}},[]);
+  const navItems=links.map(([to,label,Icon])=><NavLink onClick={()=>setOpen(false)} key={to} to={to} className={({isActive})=>`nav-link ${isActive?'nav-active':''}`}><Icon size={19}/><span className="min-w-0 flex-1">{label}</span>{to==='/notifications'&&unread>0&&<span className="grid min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{unread>99?'99+':unread}</span>}</NavLink>);
+  return <div className="min-h-screen bg-[var(--cn-bg)] text-slate-800">
     <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 flex-col overflow-hidden border-r border-rose-100 bg-white/85 px-5 py-6 backdrop-blur-xl lg:flex">
       <Brand/><div className="mt-6 flex shrink-0 items-center gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-3"><Avatar src={user?.profilePicture}/><div className="min-w-0"><p className="truncate text-sm font-semibold">{couple?.name||'Our space'}</p><p className="flex items-center gap-1 text-[11px] text-slate-400"><Cake size={12}/> Private couple space</p></div></div><div className="mt-5 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">{navItems}</div>
       <div className="mt-4 shrink-0"><div className="rounded-3xl bg-gradient-to-br from-rose-50 to-violet-50 p-4"><div className="flex items-center gap-2 text-sm font-semibold"><Sparkles size={16}/> Your little corner</div><p className="mt-1 text-xs leading-5 text-slate-500">{couple?.name||'Our space'} is private to you two.</p></div><button onClick={logout} className="mt-3 nav-link w-full text-slate-500"><LogOut size={18}/> Sign out</button></div>
