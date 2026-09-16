@@ -4,7 +4,7 @@ import type {FormEvent} from 'react';
 import {Link,useNavigate} from 'react-router-dom';
 import {ArrowRight,Heart,ShieldCheck} from 'lucide-react';
 import {motion} from 'framer-motion';
-import {api,errorMessage} from '../lib/api';
+import {api,errorMessage,saveAuthToken} from '../lib/api';
 import {useAuth} from '../main';
 
 export default function Login(){
@@ -22,7 +22,8 @@ export default function Login(){
     setAccountMissing(false);
     setBusy(true);
     try{
-      await api.post('/auth/login',{email,password});
+      const response=await api.post('/auth/login',{email,password});
+      saveAuthToken(response.data?.token);
       await refresh();
       nav('/');
     }catch(e){
