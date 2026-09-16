@@ -1,0 +1,10 @@
+{
+  "name":"CoupleNest",
+  "short_name":"CoupleNest",
+  "description":"Your private little world",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#fff9fb",
+  "theme_color":"#fff7fb",
+  "icons":[{"src":"/couplenest-heart.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

@@ -1,13 +1,13 @@
 import {NavLink, Outlet, useNavigate} from 'react-router-dom';
 import {useState} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import {Heart, Home, Image, CheckSquare, CalendarDays, BookHeart, Settings, Menu, X, LogOut, Sparkles, MessageCircle, Cake, Bell, HeartHandshake, Mail, MapPin, BarChart3} from 'lucide-react';
+import {Heart, Home, Image, CheckSquare, CalendarDays, BookHeart, Settings, Menu, X, LogOut, Sparkles, MessageCircle, Cake, Bell, HeartHandshake, Mail, MapPin, BarChart3,WalletCards,Gamepad2,Music2,Gift,ListTodo,UserRound,ShieldCheck,Palette,BellRing,Smartphone} from 'lucide-react';
 import {api} from '../lib/api';
 import {useAuth} from '../main';
 
 const links = [
   ['/','Home',Home], ['/memories','Memories',Image], ['/bucket-list','Bucket list',CheckSquare],
-  ['/dates','Dates',CalendarDays], ['/journal','Journal',BookHeart], ['/messages','Messages',MessageCircle], ['/rituals','Daily rituals',HeartHandshake], ['/letters','Open When',Mail], ['/timeline','Our timeline',HeartHandshake], ['/places','Places',MapPin], ['/stats','Our stats',BarChart3], ['/notifications','Notifications',Bell], ['/settings','Settings',Settings]
+  ['/dates','Dates',CalendarDays], ['/journal','Journal',BookHeart], ['/messages','Messages',MessageCircle], ['/rituals','Daily rituals',HeartHandshake], ['/letters','Open When',Mail], ['/timeline','Our timeline',HeartHandshake], ['/places','Places',MapPin], ['/stats','Our stats',BarChart3], ['/notifications','Notifications',Bell], ['/settings','Settings',Settings], ['/games','Couple games',Gamepad2], ['/playlist','Playlist',Music2], ['/wishlist','Wishlist',Gift], ['/tasks','Shared tasks',ListTodo], ['/expenses','Trip expenses',WalletCards], ['/couple-profile','Couple profile',UserRound], ['/privacy','Privacy center',ShieldCheck], ['/themes','Themes',Palette], ['/push','Push alerts',BellRing], ['/pwa','Install app',Smartphone]
 ] as const;
 
 export default function AppLayout(){
