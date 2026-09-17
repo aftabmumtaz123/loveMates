@@ -8,6 +8,7 @@ import AuthGate from './components/AuthGate';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login'; import Signup from './pages/Signup'; import Dashboard from './pages/Dashboard'; import Memories from './pages/Memories'; import BucketList from './pages/BucketList'; import Dates from './pages/Dates'; import Journal from './pages/Journal'; import Messages from './pages/Messages'; import Settings from './pages/Settings'; import Rituals from './pages/Rituals'; import Letters from './pages/Letters'; import Notifications from './pages/Notifications'; import Timeline from './pages/Timeline'; import Places from './pages/Places'; import Stats from './pages/Stats'; import MomentDetail from './pages/MomentDetail'; import Fun from './pages/Fun'; import SharedLists from './pages/SharedLists'; import Expenses from './pages/Expenses'; import Privacy from './pages/Privacy'; import Themes from './pages/Themes'; import Push from './pages/Push'; import CoupleProfile from './pages/CoupleProfile'; import PWA from './pages/PWA';
+import NotificationPrompt from './components/NotificationPrompt';
 
 type Auth={user:User|null;loading:boolean;couple:Couple|null;refresh:()=>Promise<void>};
 const C=createContext<Auth>({user:null,loading:true,couple:null,refresh:async()=>{}});
@@ -22,6 +23,6 @@ function App(){
       <Route path="/" element={<Dashboard/>}/><Route path="/memories" element={<Memories/>}/><Route path="/memories/:id" element={<MomentDetail/>}/><Route path="/bucket-list" element={<BucketList/>}/><Route path="/dates" element={<Dates/>}/><Route path="/journal" element={<Journal/>}/><Route path="/messages" element={<Messages/>}/><Route path="/settings" element={<Settings/>}/><Route path="/rituals" element={<Rituals/>}/><Route path="/letters" element={<Letters/>}/><Route path="/notifications" element={<Notifications/>}/><Route path="/timeline" element={<Timeline/>}/><Route path="/places" element={<Places/>}/><Route path="/stats" element={<Stats/>}/><Route path="/games" element={<Fun/>}/><Route path="/playlist" element={<SharedLists type="playlist"/>}/><Route path="/wishlist" element={<SharedLists type="wishlist"/>}/><Route path="/tasks" element={<SharedLists type="task"/>}/><Route path="/expenses" element={<Expenses/>}/><Route path="/couple-profile" element={<CoupleProfile/>}/><Route path="/us" element={<CoupleProfile/>}/><Route path="/privacy" element={<Privacy/>}/><Route path="/themes" element={<Themes/>}/><Route path="/push" element={<Push/>}/><Route path="/pwa" element={<PWA/>}/>
     </Route>
     <Route path="*" element={<Login/>}/>
-  </Routes></ErrorBoundary></C.Provider>
+  </Routes>{user&&<NotificationPrompt/>}</ErrorBoundary></C.Provider>
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><BrowserRouter><App/></BrowserRouter></React.StrictMode>);

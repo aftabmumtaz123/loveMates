@@ -6,4 +6,4 @@ export type Memory={_id:string;title:string;story:string;emoji:string;happenedAt
 export type Bucket={_id:string;title:string;done:boolean;createdBy:string};
 export type DatePlan={_id:string;title:string;date:string;note:string;createdBy:string};
 export type Journal={_id:string;body:string;mood:string;createdAt:string;createdBy:string};
-export type Message={_id:string;body:string;createdBy:string;createdAt:string};
+export type Message={_id:string;body:string;createdBy:string;createdAt:string;deliveredAt?:string|null;readAt?:string|null};
