@@ -2,11 +2,32 @@ import {useEffect,useState} from 'react';
 import {Bell,CheckCheck,Heart,MessageCircle,Mail,Trash2,EyeOff} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {api,errorMessage} from '../lib/api';
+import {getSocket} from '../lib/socket';
 const icon=(type:string)=>type==='comment'?<MessageCircle size={18}/>:type==='letter'?<Mail size={18}/>:type==='reaction'?<Heart size={18}/>:<Bell size={18}/>;
 export default function Notifications(){
   const [items,setItems]=useState<any[]>([]),[error,setError]=useState(''),[hidden,setHidden]=useState(false);
   const load=async()=>{try{setError('');setItems((await api.get('/notifications')).data.items||[])}catch(e){setError(errorMessage(e))}};
-  useEffect(()=>{void load();const timer=window.setInterval(()=>void load(),10000);return()=>window.clearInterval(timer)},[]);
+  useEffect(()=>{
+    let alive=true;
+    const refresh=async()=>{if(alive)await load()};
+    const onFocus=()=>void refresh();
+    const socket=getSocket();
+    const onNotification=()=>void refresh();
+    const onNotificationChanged=()=>void refresh();
+    if(socket){
+      socket.on('notification:new',onNotification);
+      socket.on('notification:changed',onNotificationChanged);
+      if(!socket.connected)socket.connect();
+    }
+    void refresh();
+    window.addEventListener('focus',onFocus);
+    return()=>{
+      alive=false;
+      window.removeEventListener('focus',onFocus);
+      socket?.off('notification:new',onNotification);
+      socket?.off('notification:changed',onNotificationChanged);
+    };
+  },[]);
   const read=async(id:string)=>{await api.patch('/notifications/'+id+'/read');setItems(x=>x.map(n=>n._id===id?{...n,read:true}:n))};
   const all=async()=>{await api.post('/notifications/read-all');setItems(x=>x.map(n=>({...n,read:true})))};
   const clear=async()=>{if(!window.confirm('Clear all notifications? This will permanently remove them from the database.'))return;try{await api.delete('/notifications');setItems([])}catch(e){setError(errorMessage(e))}};

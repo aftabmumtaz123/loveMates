@@ -2,7 +2,8 @@ import {NavLink, Outlet, useNavigate, Link} from 'react-router-dom';
 import {useEffect,useState} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import {Heart, Home, Image, CheckSquare, CalendarDays, BookHeart, Settings, Menu, X, LogOut, Sparkles, MessageCircle, Cake, Bell, HeartHandshake, Mail, MapPin, BarChart3,WalletCards,Gamepad2,Music2,Gift,ListTodo,UserRound,ShieldCheck,Palette,BellRing,Smartphone,Clock, Trash2} from 'lucide-react';
-import {api} from '../lib/api';
+import {api, clearAuthToken} from '../lib/api';
+import {disconnectSocket, getSocket} from '../lib/socket';
 import {useAuth} from '../main';
 
 const links = [
@@ -15,12 +16,51 @@ type LatestNotification = { _id:string; title:string; body:string; link?:string;
 export default function AppLayout(){
   const [open,setOpen]=useState(false); const [unread,setUnread]=useState(0); const [messageUnread,setMessageUnread]=useState(0); const [latest,setLatest]=useState<LatestNotification|null>(null); const [showLatest,setShowLatest]=useState(true); const [latestOpen,setLatestOpen]=useState(false);
   const nav=useNavigate(); const {couple,user,refresh}=useAuth();
-  const logout=async()=>{await api.post('/auth/logout');await refresh();nav('/login')};
+  const logout=async()=>{try{await api.post('/auth/logout')}finally{clearAuthToken();disconnectSocket();await refresh();nav('/login')}};
 
-  const loadBadges=async()=>{
-    try{const [n,m]=await Promise.all([api.get('/notifications'),api.get('/messages/unread-count')]);const items=Array.isArray(n.data.items)?n.data.items:[];setUnread(Number(n.data.unread||0));setMessageUnread(Number(m.data.count||0));setLatest(items[0]||null)}catch{}
-  };
-  useEffect(()=>{let alive=true;const load=async()=>{try{const [n,m]=await Promise.all([api.get('/notifications'),api.get('/messages/unread-count')]);if(!alive)return;const items=Array.isArray(n.data.items)?n.data.items:[];setUnread(Number(n.data.unread||0));setMessageUnread(Number(m.data.count||0));setLatest(items[0]||null)}catch{}};void load();const timer=window.setInterval(load,5000);return()=>{alive=false;window.clearInterval(timer)}},[]);
+  useEffect(()=>{
+    let alive=true;
+    let loading=false;
+    const load=async()=>{
+      if(!alive||loading)return;
+      loading=true;
+      try{
+        const [n,m]=await Promise.all([api.get('/notifications'),api.get('/messages/unread-count')]);
+        if(!alive)return;
+        const items=Array.isArray(n.data.items)?n.data.items:[];
+        setUnread(Number(n.data.unread||0));
+        setMessageUnread(Number(m.data.count||0));
+        setLatest(items[0]||null);
+      }catch{
+        // The socket provides instant updates when available; polling is only a fallback.
+      }finally{loading=false}
+    };
+
+    const onFocus=()=>void load();
+    const socket=getSocket();
+    const onNotification=()=>void load();
+    const onNotificationChanged=()=>void load();
+    const onMessage=()=>void load();
+    if(socket){
+      socket.on('notification:new',onNotification);
+      socket.on('notification:changed',onNotificationChanged);
+      socket.on('message:new',onMessage);
+      socket.on('message:status',onMessage);
+      if(!socket.connected)socket.connect();
+    }
+    void load();
+    const timer=window.setInterval(load,60000);
+    window.addEventListener('focus',onFocus);
+    return()=>{
+      alive=false;
+      window.clearInterval(timer);
+      window.removeEventListener('focus',onFocus);
+      socket?.off('notification:new',onNotification);
+      socket?.off('notification:changed',onNotificationChanged);
+      socket?.off('message:new',onMessage);
+      socket?.off('message:status',onMessage);
+    };
+  },[]);
 
   const clearNotifications=async()=>{try{await api.delete('/notifications');setUnread(0);setLatest(null);setLatestOpen(false)}catch{}};
   const navItems=links.map(([to,label,Icon])=><NavLink onClick={()=>setOpen(false)} key={to} to={to} className={({isActive})=>`nav-link ${isActive?'nav-active':''}`}><Icon size={19}/><span className="min-w-0 flex-1">{label}</span>{to==='/messages'&&messageUnread>0&&<span className="grid min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{messageUnread>99?'99+':messageUnread}</span>}{to==='/notifications'&&unread>0&&<span className="grid min-w-5 place-items-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{unread>99?'99+':unread}</span>}</NavLink>);
